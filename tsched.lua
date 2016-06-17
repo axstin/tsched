@@ -56,10 +56,8 @@ local function Scheduler()
         local ctime = os.clock()
         local ret
 
-        --print("tsched: " .. thread.state)
-
         if (thread.state == "resume") then
-            -- normal thread wishing to be resumed :D
+            -- normal thread wishing to be resumed
             -- requires 'arg' 
             thread.state = "running"
 
@@ -93,11 +91,6 @@ local function Scheduler()
                 PushBack(thread)
             end
         end
-
-        -- print(ret and "tsched: success" or "tsched: fail")
-        -- local s = "tsched list: "
-        -- for i, v in next, Threads do s = s .. tostring(v.state) .. ", " end
-        -- print(s)
 
         if (ret and not ret[1]) then
             error(ret[2])
@@ -156,6 +149,14 @@ function yield(f, ...)
     })
 
     return _yield()
+end
+
+function delay(t, f)
+    -- creates a new thread which waits 't' seconds before calling 'f'
+    spawn(function()
+        wait(t)
+        f()
+    end)
 end
 
 --[[ Execution ]]
