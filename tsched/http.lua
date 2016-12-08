@@ -138,7 +138,7 @@ local function http_request(reqt)
 	end
 end
 
-local function make_create(reqt, ssl_params)
+local function make_create(reqt, use_luasec)
 	return function()
 		local conn = {}
 		wrap_connection(conn, socket.try(socket.tcp()))
@@ -147,13 +147,8 @@ local function make_create(reqt, ssl_params)
 			local res, err = async.connect(self.sock, host, port)
 			if (not res) then return res, err end
 
-			if (ssl_params) then
-				local combine = {}
-
-				for i, v in next, reqt do combine[i] = v end
-				for i, v in next, ssl_params do combine[i] = v end
-
-				self.sock = socket.try(ssl.wrap(self.sock, combine))
+			if (use_luasec) then
+				self.sock = socket.try(ssl.wrap(self.sock, reqt))
 				socket.try(self.sock:dohandshake()) -- this probably blocks, but oh well
 			end
 
@@ -175,7 +170,7 @@ local function make_create(reqt, ssl_params)
 	end
 end
 
-local function request(reqt, body, ssl_params)
+local function request(reqt, body)
 	local simple_request = type(reqt) == "string"
 	if (simple_request) then reqt = url_to_table(reqt) end
 
@@ -191,22 +186,16 @@ local function request(reqt, body, ssl_params)
 			return nil, "luasec: redirect not supported"
 		end
 
-		if (not ssl_params) then
-			ssl_params = {}
-		end
-
 		for i, v in next, ssl_default_params do
-			ssl_params[i] = ssl_params[i] or v
+			reqt[i] = reqt[i] or v
 		end
-	else
-		ssl_params = nil
 	end
 
 	if (reqt.create) then
 		return nil, "create function not permitted"
 	end
 
-	reqt.create = make_create(reqt, ssl_params)
+	reqt.create = make_create(reqt, https)
 	local res, code, headers, status = http_request(reqt)
 
 	if (res and simple_request) then
