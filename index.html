@@ -1,0 +1,291 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <title>Tsched by axstin</title>
+
+    <link rel="stylesheet" href="stylesheets/styles.css">
+    <link rel="stylesheet" href="stylesheets/github-light.css">
+    <meta name="viewport" content="width=device-width">
+    <!--[if lt IE 9]>
+    <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+  </head>
+  <body>
+    <div class="wrapper">
+      <header>
+        <h1>Tsched</h1>
+        <p>Thread Scheduler for Lua</p>
+
+        <p class="view"><a href="https://github.com/axstin/tsched">View the Project on GitHub <small>axstin/tsched</small></a></p>
+
+
+        <ul>
+          <li><a href="https://github.com/axstin/tsched/zipball/master">Download <strong>ZIP File</strong></a></li>
+          <li><a href="https://github.com/axstin/tsched/tarball/master">Download <strong>TAR Ball</strong></a></li>
+          <li><a href="https://github.com/axstin/tsched">View On <strong>GitHub</strong></a></li>
+        </ul>
+      </header>
+      <section>
+        <h1>
+<a id="tsched" class="anchor" href="#tsched" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>tsched</h1>
+
+<p>Thread Scheduler for Lua</p>
+
+<hr>
+
+<h3>
+<a id="usage" class="anchor" href="#usage" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Usage</h3>
+
+<p>To run a file with <code>tsched</code>, simply add <code>tsched.lua</code> before the target file and any arguments.</p>
+
+<h6>
+<a id="command" class="anchor" href="#command" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Command</h6>
+
+<p><code>luajit tsched.lua target.lua arg1 arg2 ...</code></p>
+
+<h6>
+<a id="sublime-text-build-system-file-tools-build-system-new-build-system" class="anchor" href="#sublime-text-build-system-file-tools-build-system-new-build-system" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Sublime Text Build-System File (Tools-&gt;Build System-&gt;New Build System...)</h6>
+
+<div class="highlight highlight-source-json"><pre>{
+    <span class="pl-s"><span class="pl-pds">"</span>cmd<span class="pl-pds">"</span></span>: [<span class="pl-s"><span class="pl-pds">"</span>luajit<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>PATHTOTSCHED.lua<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>$file<span class="pl-pds">"</span></span>],
+    <span class="pl-s"><span class="pl-pds">"</span>selector<span class="pl-pds">"</span></span>: <span class="pl-s"><span class="pl-pds">"</span>source.lua<span class="pl-pds">"</span></span>
+}</pre></div>
+
+<hr>
+
+<h3>
+<a id="documentation" class="anchor" href="#documentation" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Documentation</h3>
+
+<h6>
+<a id="docs" class="anchor" href="#docs" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Docs</h6>
+
+<div class="highlight highlight-source-lua"><pre>void <span class="pl-c1">run</span>(<span class="pl-k">function</span> f, tuple args)</pre></div>
+
+<p>Creates a new thread with function <code>f</code>, pushes it to the front of the thread scheduler, and suspends the current thread-- essentially running <code>f</code> immediately.</p>
+
+<div class="highlight highlight-source-lua"><pre>void <span class="pl-c1">spawn</span>(<span class="pl-k">function</span> f, tuple args)</pre></div>
+
+<p>Creates a new thread with function <code>f</code> and adds it to the back of the thread queue. The current thread is not suspended.</p>
+
+<div class="highlight highlight-source-lua"><pre>void <span class="pl-c1">wait</span>(number delay)</pre></div>
+
+<p>Pauses the current thread for <code>delay</code> seconds.
+If <code>delay</code> is not a number or nil, it is set to 0.</p>
+
+<div class="highlight highlight-source-lua"><pre>void <span class="pl-c1">suspend</span>()</pre></div>
+
+<p>Suspends the current thread.</p>
+
+<div class="highlight highlight-source-lua"><pre>tuple <span class="pl-c1">yield</span>(<span class="pl-k">function</span> f, tuple args)</pre></div>
+
+<p>Suspends the current thread until a condition is met. To resume the thread, <code>f</code> must return <code>true</code>.
+<code>f</code> is called with arguments <code>args</code> and any extra arguments returned from <code>f</code> when the thread is resumed (it returns true) will be returned to <code>yield</code>.</p>
+
+<div class="highlight highlight-source-lua"><pre>void <span class="pl-c1">delay</span>(number delay, <span class="pl-k">function</span> f, tuple args)</pre></div>
+
+<p>Calls <code>f</code> with arguments <code>args</code> after <code>delay</code> seconds. It is equivalent to <code>spawn(function() wait(delay) f(...) end)</code></p>
+
+<h6>
+<a id="extra" class="anchor" href="#extra" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Extra</h6>
+
+<p><code>tsched</code> was inspired by and is very similar to ROBLOX's Lua thread scheduler. For further documentation, see <a href="http://wiki.roblox.com/index.php?title=Thread_scheduler">http://wiki.roblox.com/index.php?title=Thread_scheduler</a></p>
+
+<hr>
+
+<h3>
+<a id="code-example" class="anchor" href="#code-example" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Code Example</h3>
+
+<h6>
+<a id="input" class="anchor" href="#input" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Input</h6>
+
+<div class="highlight highlight-source-lua"><pre><span class="pl-c1">print</span><span class="pl-s"><span class="pl-pds">"</span>main thread begin<span class="pl-pds">"</span></span>
+
+<span class="pl-k">local</span> <span class="pl-k">function</span> <span class="pl-en">spawned_function</span>(<span class="pl-smi">a, b, c</span>)
+    <span class="pl-c1">print</span><span class="pl-s"><span class="pl-pds">"</span>in spawned_function<span class="pl-pds">"</span></span>
+
+    <span class="pl-k">local</span> condition <span class="pl-k">=</span> <span class="pl-c1">false</span>
+
+    <span class="pl-c">-- set condition to true after 2 seconds</span>
+    <span class="pl-c1">delay</span>(<span class="pl-c1">2</span>, <span class="pl-k">function</span>()
+        condition <span class="pl-k">=</span> <span class="pl-c1">true</span>
+    <span class="pl-k">end</span>)
+
+    <span class="pl-c">-- thread will yield until condition is true</span>
+    <span class="pl-c1">print</span>(<span class="pl-c1">yield</span>(<span class="pl-k">function</span>()
+        <span class="pl-k">if</span> (condition) <span class="pl-k">then</span>
+            <span class="pl-k">return</span> <span class="pl-c1">true</span>, <span class="pl-s"><span class="pl-pds">"</span>hello!<span class="pl-pds">"</span></span>
+        <span class="pl-k">end</span>
+
+        <span class="pl-k">return</span> <span class="pl-c1">false</span>
+    <span class="pl-k">end</span>))
+
+    <span class="pl-c1">print</span><span class="pl-s"><span class="pl-pds">"</span>spawned_function end<span class="pl-pds">"</span></span>
+<span class="pl-k">end</span>
+
+<span class="pl-k">local</span> <span class="pl-k">function</span> <span class="pl-en">delayed_function</span>(<span class="pl-smi">a, b, c</span>)
+    <span class="pl-c1">print</span><span class="pl-s"><span class="pl-pds">"</span>in delayed_function<span class="pl-pds">"</span></span>
+    <span class="pl-c1">print</span>(a, b, c)
+
+    <span class="pl-c1">run</span>(<span class="pl-k">function</span>()
+        <span class="pl-c1">print</span><span class="pl-s"><span class="pl-pds">"</span>in run function<span class="pl-pds">"</span></span>
+
+        <span class="pl-c1">spawn</span>(spawned_function, <span class="pl-c1">4</span>, <span class="pl-c1">5</span>, <span class="pl-c1">7</span>)
+
+        <span class="pl-c1">print</span><span class="pl-s"><span class="pl-pds">"</span>waiting ...<span class="pl-pds">"</span></span>
+        <span class="pl-c1">wait</span>(<span class="pl-c1">1</span>)
+
+        <span class="pl-c1">print</span><span class="pl-s"><span class="pl-pds">"</span>run function end<span class="pl-pds">"</span></span>
+    <span class="pl-k">end</span>)
+
+    <span class="pl-c1">print</span><span class="pl-s"><span class="pl-pds">"</span>delayed_function end<span class="pl-pds">"</span></span>
+<span class="pl-k">end</span>
+
+<span class="pl-c1">delay</span>(<span class="pl-c1">1</span>, delayed_function, <span class="pl-c1">1</span>, <span class="pl-c1">2</span>, <span class="pl-c1">3</span>)
+
+<span class="pl-c1">print</span><span class="pl-s"><span class="pl-pds">"</span>main thread end<span class="pl-pds">"</span></span></pre></div>
+
+<h6>
+<a id="output" class="anchor" href="#output" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Output</h6>
+
+<pre><code>main thread begin
+main thread end
+in delayed_function
+1   2   3
+in run function
+waiting ...
+delayed_function end
+in spawned_function
+run function end
+hello!
+spawned_function end
+[Finished in 3.1s]
+</code></pre>
+
+<hr>
+
+<h3>
+<a id="extensions" class="anchor" href="#extensions" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Extensions</h3>
+
+<h4>
+<a id="socketlua" class="anchor" href="#socketlua" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>socket.lua</h4>
+
+<p><code>socket.lua</code> is an extension of <a href="https://github.com/diegonehab/luasocket">luasockets</a> for <code>tsched</code> that allows for asynchronous functionality. </p>
+
+<h5>
+<a id="example" class="anchor" href="#example" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Example</h5>
+
+<h6>
+<a id="input-1" class="anchor" href="#input-1" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Input</h6>
+
+<div class="highlight highlight-source-lua"><pre><span class="pl-k">local</span> socket <span class="pl-k">=</span> <span class="pl-c1">require</span><span class="pl-s"><span class="pl-pds">"</span>socket<span class="pl-pds">"</span></span>
+<span class="pl-k">local</span> async <span class="pl-k">=</span> <span class="pl-c1">require</span><span class="pl-s"><span class="pl-pds">"</span>tsched.socket<span class="pl-pds">"</span></span>
+
+<span class="pl-k">local</span> <span class="pl-k">function</span> <span class="pl-en">download</span>(<span class="pl-smi">host, file</span>)
+    <span class="pl-k">local</span> sock <span class="pl-k">=</span> socket.<span class="pl-c1">tcp</span>()
+    <span class="pl-k">local</span> buff <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span><span class="pl-pds">"</span></span>
+
+    <span class="pl-c1">assert</span>(async.<span class="pl-c1">connect</span>(sock, host, <span class="pl-c1">80</span>))
+
+    async.<span class="pl-c1">send</span>(sock, <span class="pl-s"><span class="pl-pds">"</span>GET <span class="pl-pds">"</span></span> <span class="pl-k">..</span> <span class="pl-c1">tostring</span>(file) <span class="pl-k">..</span> <span class="pl-s"><span class="pl-pds">"</span> HTTP/1.1<span class="pl-cce">\r\n\r\n</span><span class="pl-pds">"</span></span>)
+
+    <span class="pl-k">while</span> (<span class="pl-c1">true</span>) <span class="pl-k">do</span>
+        <span class="pl-k">local</span> str, err <span class="pl-k">=</span> async.<span class="pl-c1">receive</span>(sock)
+
+        <span class="pl-k">if</span> (str) <span class="pl-k">then</span> 
+            buff <span class="pl-k">=</span> buff <span class="pl-k">..</span> str
+        <span class="pl-k">elseif</span> (err <span class="pl-k">==</span> <span class="pl-s"><span class="pl-pds">"</span>closed<span class="pl-pds">"</span></span>) <span class="pl-k">then</span>
+            <span class="pl-k">break</span>
+        <span class="pl-k">end</span>
+    <span class="pl-k">end</span>
+
+    sock:<span class="pl-c1">close</span>()
+
+    <span class="pl-k">return</span> buff
+<span class="pl-k">end</span>
+
+<span class="pl-k">for</span> i <span class="pl-k">=</span> <span class="pl-c1">1</span>, <span class="pl-c1">5</span> <span class="pl-k">do</span>
+    <span class="pl-c1">spawn</span>(<span class="pl-k">function</span>()
+        <span class="pl-c1">print</span>(<span class="pl-s"><span class="pl-pds">"</span>download start <span class="pl-pds">"</span></span> <span class="pl-k">..</span> i)
+        <span class="pl-c1">download</span>(<span class="pl-s"><span class="pl-pds">"</span>www.example.com<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>/<span class="pl-pds">"</span></span>)
+        <span class="pl-c1">print</span>(<span class="pl-s"><span class="pl-pds">"</span>download end <span class="pl-pds">"</span></span> <span class="pl-k">..</span> i)
+    <span class="pl-k">end</span>)
+<span class="pl-k">end</span>
+
+<span class="pl-k">for</span> i <span class="pl-k">=</span> <span class="pl-c1">1</span>, <span class="pl-c1">5</span> <span class="pl-k">do</span>
+    <span class="pl-c1">spawn</span>(<span class="pl-k">function</span>()
+        <span class="pl-c1">print</span>(<span class="pl-s"><span class="pl-pds">"</span>thread <span class="pl-pds">"</span></span> <span class="pl-k">..</span> i)
+    <span class="pl-k">end</span>)
+<span class="pl-k">end</span></pre></div>
+
+<h6>
+<a id="output-1" class="anchor" href="#output-1" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Output</h6>
+
+<pre><code>download start 1
+download start 2
+download start 3
+download start 4
+download start 5
+thread 1
+thread 2
+thread 3
+thread 4
+thread 5
+download end 1
+download end 4
+download end 5
+download end 3
+download end 2
+[Finished in 0.1s]
+</code></pre>
+
+<h4>
+<a id="httplua" class="anchor" href="#httplua" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>http.lua</h4>
+
+<p>Like <code>socket.lua</code>, <code>http.lua</code> gives asynchronous functionality to <a href="https://github.com/diegonehab/luasocket">luasockets</a>'s http namespace/library. The module also supports HTTPS, if <a href="https://github.com/brunoos/luasec">luasec</a> is installed.</p>
+
+<p>For documentation, see: <a href="http://w3.impa.br/%7Ediego/software/luasocket/http.html#request">http://w3.impa.br/~diego/software/luasocket/http.html#request</a> </p>
+
+<h5>
+<a id="example-1" class="anchor" href="#example-1" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Example</h5>
+
+<h6>
+<a id="input-2" class="anchor" href="#input-2" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Input</h6>
+
+<div class="highlight highlight-source-lua"><pre><span class="pl-k">local</span> http <span class="pl-k">=</span> <span class="pl-c1">require</span><span class="pl-s"><span class="pl-pds">"</span>tsched.http<span class="pl-pds">"</span></span>
+
+<span class="pl-k">for</span> i <span class="pl-k">=</span> <span class="pl-c1">1</span>, <span class="pl-c1">10</span> <span class="pl-k">do</span>
+    <span class="pl-c1">spawn</span>(<span class="pl-k">function</span>()
+        <span class="pl-k">local</span> result, err <span class="pl-k">=</span> http.<span class="pl-c1">request</span>(<span class="pl-s"><span class="pl-pds">"</span>https://www.example.com:443/<span class="pl-pds">"</span></span>)
+        <span class="pl-c1">print</span>(result:<span class="pl-c1">sub</span>(<span class="pl-c1">1</span>, <span class="pl-c1">10</span>))
+    <span class="pl-k">end</span>)
+<span class="pl-k">end</span></pre></div>
+
+<h6>
+<a id="output-2" class="anchor" href="#output-2" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Output</h6>
+
+<pre><code>&lt;!doctype 
+&lt;!doctype 
+&lt;!doctype 
+&lt;!doctype 
+&lt;!doctype 
+&lt;!doctype 
+&lt;!doctype 
+&lt;!doctype 
+&lt;!doctype 
+&lt;!doctype 
+[Finished in 1.0s]
+</code></pre>
+
+<hr>
+      </section>
+      <footer>
+        <p>This project is maintained by <a href="https://github.com/axstin">axstin</a></p>
+        <p><small>Hosted on GitHub Pages &mdash; Theme by <a href="https://github.com/orderedlist">orderedlist</a></small></p>
+      </footer>
+    </div>
+    <script src="javascripts/scale.fix.js"></script>
+    
+  </body>
+</html>
