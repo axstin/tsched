@@ -68,6 +68,77 @@ Calls `f` with arguments `args` after `delay` seconds. It is equivalent to ```sp
 
 ***
 
+### Code Example
+
+###### Input
+
+```lua
+print"main thread begin"
+
+local function spawned_function(a, b, c)
+	print"in spawned_function"
+
+	local condition = false
+
+	-- set condition to true after 2 seconds
+	delay(2, function()
+		condition = true
+	end)
+
+	-- thread will yield until condition is true
+	print(yield(function()
+		if (condition) then
+			return true, "hello!"
+		end
+
+		return false
+	end))
+
+	print"spawned_function end"
+end
+
+local function delayed_function(a, b, c)
+	print"in delayed_function"
+	print(a, b, c)
+
+	run(function()
+		print"in run function"
+
+		spawn(spawned_function, 4, 5, 7)
+
+		print"waiting ..."
+		wait(1)
+
+		print"run function end"
+	end)
+
+	print"delayed_function end"
+end
+
+delay(1, delayed_function, 1, 2, 3)
+
+print"main thread end"
+```
+
+###### Output
+
+```
+main thread begin
+main thread end
+in delayed_function
+1	2	3
+in run function
+waiting ...
+delayed_function end
+in spawned_function
+run function end
+hello!
+spawned_function end
+[Finished in 3.1s]
+```
+
+***
+
 ### Extensions
 
 #### socket.lua
@@ -179,74 +250,7 @@ end
 
 ***
 
-### Code Examples
 
-###### Input
-
-```lua
-print"main thread begin"
-
-local function spawned_function(a, b, c)
-	print"in spawned_function"
-
-	local condition = false
-
-	-- set condition to true after 2 seconds
-	delay(2, function()
-		condition = true
-	end)
-
-	-- thread will yield until condition is true
-	print(yield(function()
-		if (condition) then
-			return true, "hello!"
-		end
-
-		return false
-	end))
-
-	print"spawned_function end"
-end
-
-local function delayed_function(a, b, c)
-	print"in delayed_function"
-	print(a, b, c)
-
-	run(function()
-		print"in run function"
-
-		spawn(spawned_function, 4, 5, 7)
-
-		print"waiting ..."
-		wait(1)
-
-		print"run function end"
-	end)
-
-	print"delayed_function end"
-end
-
-delay(1, delayed_function, 1, 2, 3)
-
-print"main thread end"
-```
-
-###### Output
-
-```
-main thread begin
-main thread end
-in delayed_function
-1	2	3
-in run function
-waiting ...
-delayed_function end
-in spawned_function
-run function end
-hello!
-spawned_function end
-[Finished in 3.1s]
-```
 
 
 
