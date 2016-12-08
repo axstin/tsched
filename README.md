@@ -68,6 +68,117 @@ Calls `f` with arguments `args` after `delay` seconds. It is equivalent to ```sp
 
 ***
 
+### Extensions
+
+#### socket.lua
+
+`socket.lua` is an extension of [luasockets](https://github.com/diegonehab/luasocket) for `tsched` that allows for asynchronous functionality. 
+
+##### Example
+
+###### Input
+
+```lua
+local socket = require"socket"
+local async = require"tsched.socket"
+
+local function download(host, file)
+	local sock = socket.tcp()
+	local buff = ""
+
+	assert(async.connect(sock, host, 80))
+
+	async.send(sock, "GET " .. tostring(file) .. " HTTP/1.1\r\n\r\n")
+
+	while (true) do
+		local str, err = async.receive(sock)
+
+		if (str) then 
+			buff = buff .. str
+		elseif (err == "closed") then
+			break
+		end
+	end
+
+	sock:close()
+
+	return buff
+end
+
+for i = 1, 5 do
+	spawn(function()
+		print("download start " .. i)
+		download("www.example.com", "/")
+		print("download end " .. i)
+	end)
+end
+
+for i = 1, 5 do
+	spawn(function()
+		print("thread " .. i)
+	end)
+end
+```
+###### Output
+
+```
+download start 1
+download start 2
+download start 3
+download start 4
+download start 5
+thread 1
+thread 2
+thread 3
+thread 4
+thread 5
+download end 1
+download end 4
+download end 5
+download end 3
+download end 2
+[Finished in 0.1s]
+```
+
+#### http.lua
+
+Like `socket.lua`, `http.lua` gives asynchronous functionality to [luasockets](https://github.com/diegonehab/luasocket)'s http namespace/library. The module also supports HTTPS, if [luasec](https://github.com/brunoos/luasec) is installed.
+
+For documentation, see: http://w3.impa.br/~diego/software/luasocket/http.html#request 
+
+##### Example
+
+###### Input
+
+```lua
+local http = require"tsched.http"
+
+for i = 1, 10 do
+	spawn(function()
+		local result, err = http.request("https://www.example.com:443/")
+		print(result:sub(1, 10))
+	end)
+end
+```
+
+###### Output
+
+```
+<!doctype 
+<!doctype 
+<!doctype 
+<!doctype 
+<!doctype 
+<!doctype 
+<!doctype 
+<!doctype 
+<!doctype 
+<!doctype 
+[Finished in 1.0s]
+```
+
+***
+
 ### Code Examples
 
 ###### Input
