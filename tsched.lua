@@ -14,14 +14,20 @@ For use with sublime text (sublime-build file) (Tools->Build System->New Build S
 
 --[[ Init ]]
 
-local Usage = "lua[jit] tsched.lua targetfile ..."
-local TargetFile = arg[1]
-local TargetArg = {}
+local usage = "usage: lua[jit] tsched.lua targetfile.lua ..."
+local targetfile = arg[1]
+local targetarg = {}
 
-if (not TargetFile) then error('usage: ' .. Usage) end
+if (not targetfile) then error(usage) end
 
-for i = 1, #arg do
-    TargetArg[i - 1] = arg[i]
+do
+    -- adjust arguments
+
+    for i = 1, #arg do
+        targetarg[i - 1] = arg[i]
+    end
+
+    targetarg[-1] = arg[-1]
 end
 
 local _create = coroutine.create 
@@ -30,132 +36,133 @@ local _running = coroutine.running
 local _status = coroutine.status 
 local _wrap = coroutine.wrap 
 local _yield = coroutine.yield
-local unpack = table.unpack or unpack
+local _unpack = table.unpack or unpack
+local _insert = table.insert
+local _remove = table.remove
+local _clock = os.clock
 
-local Threads = {}
+local threads = {}
 
-local function Push(t)
-    table.insert(Threads, t)
-    return t
+local function push(t)
+    _insert(threads, t)
 end
 
-local function PushBack(t)
-    table.insert(Threads, 1, t)
-    return t
+local function pushback(t)
+    _insert(threads, 1, t)
 end
 
-local function Pop()
-    return table.remove(Threads)
+local function pop()
+    return _remove(threads)
 end
 
-local function Scheduler()
+local function scheduler()
     while (true) do
-        if (#Threads == 0) then break end
-        local thread = Pop()
+        if (#threads == 0) then break end
 
-        local ctime = os.clock()
-        local ret
+        local thread = pop()
+        local res = { thread.condition() }
 
-        if (thread.state == "resume") then
-            -- normal thread wishing to be resumed
-            -- requires 'arg' 
-            thread.state = "running"
-
-            if (not thread.arg) then thread.arg = {} end
-            ret = {_resume(thread.co, unpack(thread.arg))}
-        elseif (thread.state == "wait") then
-            -- this thread is waiting for a specified amount of time
-            -- if the time is up, resume the thread and remove it from the queue
-            -- else, leave it alone
-
-            if (ctime > (thread.suspend_time + thread.delay)) then
-                -- time's up
-                thread.state = "running"
-                ret = {_resume(thread.co, ctime - thread.suspend_time)}
-                thread.suspend_time = nil
-                thread.delay = nil
+        if (#res > 0) then
+            if (_remove(res, 1)) then
+                assert(_resume(thread.co, _unpack(res)))
             else
-                PushBack(thread)
+                pushback(thread)
             end
-        elseif (thread.state == "yield") then
-            -- this thread is waiting for a condition to be met
-            -- let's call its callback function and resume the thread if it returns true
-
-            local yield_ret = {thread.f(unpack(thread.arg))}
-            if (table.remove(yield_ret, 1)) then
-                thread.state = "running"
-                ret = {_resume(thread.co, unpack(yield_ret))}
-                thread.f = nil
-                thread.arg = nil
-            else
-                PushBack(thread)
-            end
-        end
-
-        if (ret and not ret[1]) then
-            error(ret[2])
         end
     end
 end
 
 function run(f, ...)
     -- creates a new thread, adds it to the front of the queue and suspends current thread
-    Push({
-        state = "resume";
+
+    local args = {...}
+
+    push({
         co = _create(f);
-        arg = {...};
+        condition = function()
+            return true, unpack(args)
+        end;
+    })
+
+    suspend()
+end
+
+function spawn(f, ...)
+    -- creates a new thread adds it to the back of the queue
+
+    local args = {...}
+
+    pushback({
+        co = _create(f);
+        condition = function()
+            return true, unpack(args)
+        end
+    })
+end
+
+function wait(t)
+    -- waits for t seconds
+
+    if (type(t) ~= "number") then t = 0 end
+
+    local suspendtime = _clock()
+
+    pushback({
+        co = _running();
+        condition = function()
+            local elapsed = _clock() - suspendtime
+
+            if (elapsed > t) then
+                return true, elapsed
+            end 
+
+            return false
+        end
+    })
+
+    return _yield()
+end
+
+function suspend()
+    -- suspends the current thread and adds it to the back of the queue
+
+    pushback({
+        co = _running();
+        condition = function()
+            return true
+        end
     })
 
     _yield()
 end
 
-function spawn(f, ...)
-    -- creates a new thread adds it to the back of the queue
-    PushBack({
-        state = "resume";
-        co = _create(f);
-        arg = {...};
-    })
-end
-
-function suspend()
-    -- suspends the current thread and adds it to the back of the queue
-    wait(-1)
-end
-
-function wait(t)
-    -- waits for t seconds
-    if (not t or type(t) ~= "number") then t = 0 end
-
-    PushBack({
-        state = "wait";
-        co = coroutine.running();
-        suspend_time = os.clock();
-        delay = t;
-    })
-
-    return _yield()
-end
-
 function yield(f, ...)
     -- yields thread until a condition is met
-    if (not f or type(f) ~= "function") then error("yield: function expected") end
 
-    PushBack({
-        state = "yield";
-        co = coroutine.running();
-        f = f;
-        arg = {...};
+    assert(type(f) == "function", "yield: function expected")
+    local args = {...}
+
+    pushback({
+        co = _running();
+        condition = function()
+            return f(_unpack(args))
+        end
     })
 
     return _yield()
 end
 
-function delay(t, f)
+function delay(t, f, ...)
     -- creates a new thread which waits 't' seconds before calling 'f'
+
+    if (type(t) ~= "number") then t = 0 end
+    assert(type(f) == "function", "delay: function expected")
+
+    local args = {...}
+
     spawn(function()
         wait(t)
-        f()
+        f(_unpack(args))
     end)
 end
 
@@ -164,8 +171,8 @@ end
 _TSCHED = true
 
 do
-    local f = assert(loadfile(TargetFile))
+    local f = assert(loadfile(targetfile))
     spawn(f)
 end
 
-Scheduler()
+scheduler()
